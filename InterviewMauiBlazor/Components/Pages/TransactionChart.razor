@@ -1,0 +1,101 @@
+﻿@page "/transactionchart"
+@using Syncfusion.Blazor.Charts 
+@using System.Globalization
+
+@code {
+    [Parameter]
+    public DateTime StartDate { get; set; }
+    [Parameter]
+    public DateTime EndDate { get; set; }
+
+    private List<TotalTransactionPerDaysDTO> DTOs = new List<TotalTransactionPerDaysDTO>();
+    private List<TransactionDTO> transactionDTOs => transactionServices.GetAll();
+
+    protected override void OnInitialized()
+    {
+        SetDefaultDates();
+        DTOs = transactionServices.GetByDate(StartDate, EndDate);
+    }
+    private void SetDefaultDates()
+    {
+        if(StartDate == default)
+        {
+            StartDate = DateTime.Now.AddDays(-7);
+        }
+        if (EndDate == default)
+        {
+            EndDate = DateTime.Now;
+        }
+        if (StartDate > EndDate)
+        {
+            EndDate = StartDate;
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        SetDefaultDates();
+        DTOs = transactionServices.GetByDate(StartDate, EndDate);
+        StateHasChanged();
+    }
+}
+
+<div class="chart-container">
+    <SfChart>
+        <ChartPrimaryXAxis Format="dd/MM/yyyy" Minimum="@StartDate" Maximum="@EndDate" ValueType="Syncfusion.Blazor.Charts.ValueType.DateTime" />
+        <ChartPrimaryYAxis Interval="1" />
+        <ChartSeriesCollection>
+            <ChartSeries DataSource="@DTOs" XName="date" YName="TotalTransaction" Type="ChartSeriesType.SplineArea"
+                         Fill="url(#gradient)">
+                <ChartEmptyPointSettings Mode="EmptyPointMode.Zero"></ChartEmptyPointSettings>
+                <ChartMarker Visible="true" Height="10" Width="10" />
+            </ChartSeries>
+        </ChartSeriesCollection>
+        <ChartCrosshairSettings Enable="true" LineType="LineType.Both"></ChartCrosshairSettings>
+        <ChartTooltipSettings Enable="true">
+            <Template>
+                @{
+                    var data = context as ChartTooltipInfo;
+                    var dateX = data.X is string
+                    ? DateTime.ParseExact(data.X.ToString(), "dd/MM/yyyy", CultureInfo.InvariantCulture) : (DateTime)data.X;
+
+                    var dto = DTOs.Where(t => t.date == dateX
+                    ).FirstOrDefault();
+                    @if (!(dto == null))
+                    {
+                        <div style="max-height: 300px; overflow-y: auto; width: 250px; border: 1px solid black; padding: 10px; background-color: #f9f9f9;">
+                            <table style="width:100%;  border: 1px solid black;">
+                                <tr><th colspan="2" bgcolor="#00FFFF">@data.X</th></tr>
+                                <tr><td bgcolor="#00FFFF">Total Transaction: @data.Y</td></tr>
+                                <tr><td bgcolor="#00FFFF">Total Value: @dto.TotalValue</td></tr>
+                                <tr><th colspan="2" bgcolor="#00FFFF">Order details</th></tr>
+                                @foreach (var detail in transactionDTOs.Where(t => t.Time == dateX))
+                                {
+                                    <tr><td bgcolor="#00FFFF">Buyer: @detail.Buyer</td></tr>
+                                    <tr><td bgcolor="#00FFFF">Seller: @detail.Seller</td></tr>
+                                    <tr><td bgcolor="#00FFFF">Product Name: @detail.Product.Name</td></tr>
+                                    <tr><td bgcolor="#00FFFF">Order ID: @detail.Order.Id</td></tr>
+                                    <tr><td bgcolor="#00FFFF">Quantity: @detail.Quantity</td></tr>
+                                    <tr><td bgcolor="#00FFFF">Total Price: @detail.TotalPrice</td></tr>
+                                    <tr><td bgcolor="#00FFFF">------------------------</td></tr>
+                                }
+                            </table>
+                        </div>
+
+                    }
+                }
+            </Template>
+        </ChartTooltipSettings>
+    </SfChart>
+</div>
+<svg style="height: 0">
+    <defs>
+        <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:rgba(63, 81, 181, 0.6);stop-opacity:1" />
+            <stop offset="100%" style="stop-color:rgba(63, 81, 181, 0);stop-opacity:1" />
+        </linearGradient>
+    </defs>
+</svg>
+
+

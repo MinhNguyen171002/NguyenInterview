@@ -1,0 +1,67 @@
+﻿.transaction-summary {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.btn-primary {
+    background-color: #007bff; 
+    border-color: #007bff;
+}
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+
+.btn-warning {
+    background-color: #ffc107; 
+    border-color: #ffc107;
+}
+
+    .btn-warning:hover {
+        background-color: #d39e00;
+        border-color: #d39e00;
+    }
+
+.btn-tertiary {
+    background-color: #e6e6e6;
+    color: #333;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+    .btn-tertiary:hover {
+        background-color: #cccccc;
+        color: #000;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        border-color: #5a6268;
+    }
+
+.table-header {
+    background-color: #007bff;
+    color: white;
+    text-align: center;
+}
+
+.table {
+    margin-top: 15px;
+}
+
+    .table td, .table th {
+        padding: 10px;
+        vertical-align: middle;
+    }
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 123, 255, 0.1); /* Màu nền nhạt cho hàng lẻ */
+}

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
-        <TargetFrameworks>net8.0-android;net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
+        <TargetFrameworks>net8.0;net8.0-android;net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
         <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
         <!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
         <!-- <TargetFrameworks>$(TargetFrameworks);net8.0-tizen</TargetFrameworks> -->
@@ -13,7 +13,7 @@
             either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
         <!-- For example: <RuntimeIdentifiers>maccatalyst-x64;maccatalyst-arm64</RuntimeIdentifiers> -->
 
-        <OutputType>Exe</OutputType>
+		<OutputType Condition="'$(TargetFramework)' != 'net8.0'">Exe</OutputType>
         <RootNamespace>InterviewMauiBlazor</RootNamespace>
         <UseMaui>true</UseMaui>
         <SingleProject>true</SingleProject>
@@ -36,6 +36,7 @@
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
         <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
+        <UserSecretsId>216d8eaa-c9ec-461c-8379-1db8fbaac7fd</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
@@ -57,17 +58,40 @@
     </ItemGroup>
 
     <ItemGroup>
+      <None Remove="Components\Pages\Home.razor.css" />
+      <None Remove="Components\Pages\TotalTransaction.razor.css" />
+      <None Remove="Components\Pages\TransactionChart.razor.css" />
+      <None Remove="Components\Pages\TransactionManager.razor.css" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="Components\Pages\Home.razor.css" />
+      <Content Include="Components\Pages\TotalTransaction.razor.css" />
+      <Content Include="Components\Pages\TransactionChart.razor.css" />
+      <Content Include="Components\Pages\TransactionManager.razor.css" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AutoMapper" Version="13.0.1" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.12" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.1" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.1" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.1">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.1" />
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
+        <PackageReference Include="Syncfusion.Blazor.Charts" Version="28.1.41" />
+        <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="28.1.41" />
+        <PackageReference Include="Syncfusion.Blazor.Grid" Version="28.1.41" />
+        <PackageReference Include="Syncfusion.Blazor.Layouts" Version="28.1.41" />
+        <PackageReference Include="Syncfusion.Blazor.Themes" Version="28.1.41" />
+        <PackageReference Include="Syncfusion.Licensing" Version="28.1.41" />
     </ItemGroup>
 
 </Project>

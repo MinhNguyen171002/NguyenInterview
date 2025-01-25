@@ -1,0 +1,376 @@
+﻿@page "/transactionmanager"
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.DropDowns
+
+@code {
+    private List<TransactionDTO> DTOs { get; set; } = new List<TransactionDTO>();
+    private List<ProductDTO> proDTOs => transactionServices.GetProducts();
+    private List<OrderDTO> orderDTOs => transactionServices.GetOrders().Where(t => t.OrderDate == datePick).ToList();
+    private TransactionDTO newDTO { get; set; } = new TransactionDTO();
+    private TransactionDTO editDTO;
+    private string SearchTerm { get; set; } = string.Empty;
+
+
+    private DateTime datePick;
+
+    private decimal ProductPrice = 0;
+
+    private bool isAddingNewRow = false;
+
+    private bool isEdit = false;
+
+    protected override void OnInitialized()
+    {
+        DTOs = transactionServices.GetAll();
+    }
+
+    #region"search"
+    private IEnumerable<TransactionDTO> FilteredTransactions => DTOs
+        .Where(t => string.IsNullOrWhiteSpace(SearchTerm) ||
+                    t.Product.Name.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    t.Buyer.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    t.Seller.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    t.Status.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+
+    private void OnInputEvent(ChangeEventArgs changeEvent)
+    {
+        SearchTerm = (string)changeEvent.Value;
+    }
+    #endregion     
+
+    #region "events"
+
+
+    private void SetDefalutValue()
+    {
+        datePick = DateTime.Now.Date;
+        newDTO.Quantity = 0;
+        newDTO.ProductId = proDTOs.First().Id;
+        newDTO.Seller = string.Empty;
+        newDTO.Status = "UnKnow";
+        newDTO.orderId = orderDTOs.Select(t => t.Id).FirstOrDefault();
+        newDTO.Buyer = orderDTOs.Select(t => t.CustomerName).FirstOrDefault();
+        newDTO.Time = datePick;
+        ProductPrice = 0;
+    }
+
+    void ShowAddRow()
+    {
+
+        isAddingNewRow = true;
+        SetDefalutValue();
+        if (proDTOs != null && proDTOs.Any())
+        {
+            ProductPrice = proDTOs.First().Price;
+        }
+    }
+
+    void EditEnable(int id)
+    {
+        isEdit = true;
+        editDTO = DTOs.FirstOrDefault(t => t.Order.Id == id);
+        editDTO.orderId = id;
+        ProductPrice = editDTO.Product.Price;
+    }
+
+    void HideAddRow()
+    {
+        if (isEdit)
+        {
+            isEdit = false;
+        }
+        else
+        {
+            isAddingNewRow = false;
+        }      
+        SetDefalutValue();
+        var newDTOs = transactionServices.GetAll();
+        if (!newDTOs.SequenceEqual(DTOs))
+        {
+            DTOs = newDTOs;
+            StateHasChanged();
+        }
+    }
+
+    private void OnProductChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value.ToString(), out int id))
+        {
+            if (isEdit)
+            {
+                editDTO.ProductId = id;
+                ProductPrice = proDTOs.Where(t => t.Id == id).Select(t => t.Price).FirstOrDefault();
+                editDTO.TotalPrice = editDTO.Quantity * ProductPrice;
+            }
+            newDTO.ProductId = id;
+            ProductPrice = proDTOs.Where(t => t.Id == id).Select(t => t.Price).FirstOrDefault();
+            newDTO.TotalPrice = newDTO.Quantity * ProductPrice;
+        }
+        else
+        {
+            ProductPrice = 0;
+        }
+    }
+
+    private void OnOrderChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value.ToString(), out int id))
+        {
+            newDTO.orderId = id;
+            newDTO.Buyer = orderDTOs.Where(t => t.Id == id).Select(t => t.CustomerName).FirstOrDefault();
+        }
+    }
+    private void OnStatusChanged(ChangeEventArgs e)
+    {
+        var status = e.Value.ToString();
+        if (!string.IsNullOrEmpty(status))
+        {
+            if (isEdit)
+            {
+                editDTO.Status = status;
+            }
+            newDTO.Status = status;
+        }
+        else
+        {
+            newDTO.Status = string.Empty;
+        }
+
+    }
+
+    private void GetTotalPrice(ChangeEventArgs e)
+    {
+        if (decimal.TryParse(e.Value.ToString(), out decimal quanity))
+        {
+            if (isEdit)
+            {
+                editDTO.Quantity = (int)quanity;
+                editDTO.TotalPrice = quanity * ProductPrice;
+            }
+            newDTO.Quantity = (int)quanity;
+            newDTO.TotalPrice = quanity * ProductPrice;
+        }
+        else
+        {
+            newDTO.TotalPrice = 0;
+        }
+    }
+
+    private async Task DateSet(ChangeEventArgs e)
+    {       
+        if (DateTime.TryParse(e.Value.ToString(), out DateTime date))
+        {
+            if (orderDTOs.FirstOrDefault(t=>t.OrderDate==date) == null)
+            {
+                await JSRuntime.InvokeVoidAsync("showAlert", $"Have no Order in {date}");
+            }
+            else
+            {
+                if (isEdit)
+                {
+                    editDTO.Time = date;
+                    editDTO.Status = "PreOrder";
+                }
+                newDTO.Time = date;
+                datePick = date;
+                newDTO.Buyer = orderDTOs.Select(t => t.CustomerName).FirstOrDefault();
+                newDTO.Status = date.Date >= DateTime.Now.AddDays(1).Date ? "PreOrder" : newDTO.Status;
+            }            
+        }
+        else
+        {
+            datePick = DateTime.Now.Date;
+            newDTO.Buyer = orderDTOs.Select(t => t.CustomerName).FirstOrDefault();
+        }
+        
+    }
+    #endregion
+
+    #region "CRUD"
+    async Task AddTransaction(TransactionDTO newTransaction)
+    {
+        if (newTransaction.Quantity > 0)
+        {
+            if(isEdit)
+            {
+                transactionServices.Update(newTransaction);
+                HideAddRow();
+            }
+            else
+            {
+                transactionServices.Insert(newTransaction);
+                SetDefalutValue();
+            }   
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("showAlert", "Quantity must be greater than 0.Please re - enter.");
+        }
+    }
+
+    protected async Task DeleteTransaction(int proid, int orid)
+    {
+        bool confirmDelete = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this transaction?");
+        if (confirmDelete)
+        {
+            transactionServices.Delete(proid, orid);
+            var newDTOs = transactionServices.GetAll();
+            if (!newDTOs.SequenceEqual(DTOs))
+            {
+                DTOs = newDTOs;
+                StateHasChanged(); 
+            }
+        }
+    }
+    #endregion    
+}
+
+<div class="search-bar">
+    <input type="text" class="form-control" placeholder="Search..." @bind="SearchTerm" @oninput="OnInputEvent" />
+</div>
+<table class="table table-bordered table-striped table-hover mt-3" style="table-layout: fixed; width: 100%;">
+    <thead class="table-dark">
+        <tr>
+            <th style="width: 10%;">Order</th>
+            <th style="width: auto;">Product Name</th>
+            <th style="width: 6%;">Quantity</th>
+            <th style="width: 8%;">Total Price</th>
+            <th style="width: auto;">Buyer</th>
+            <th style="width: auto;">Seller</th>
+            <th style="width: auto;">Time</th>
+            <th style="width: auto;">Status</th>
+            <th style="width: 15%;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (isAddingNewRow)
+        {
+            <tr>
+                <td>
+                    <select @onchange="OnOrderChanged" class="form-control-sm">
+                        @foreach (var order in orderDTOs)
+                        {
+                            <option value="@order.Id" style="font-size: 0.8rem;">@order.CustomerName - @order.OrderDate</option>
+                        }
+                    </select>
+                </td>
+                <td>
+                    <select @onchange="OnProductChanged" class="form-control-sm">
+                        @foreach (var product in proDTOs)
+                        {
+                            <option value="@product.Id" style="font-size: 0.8rem;">@product.Name</option>
+                        }
+                    </select>
+                </td>
+                <td>
+                    <input type="number" placeholder="@newDTO.Quantity" @oninput="GetTotalPrice" class="form-control" />
+                </td>
+                <td>
+                    <input type="number" placeholder="@newDTO.TotalPrice" class="form-control" readonly />
+                </td>
+                <td>
+                    <input type="text" placeholder="@newDTO.Buyer" class="form-control" />
+                </td>
+                <td>
+                    <input type="text" @bind="newDTO.Seller" placeholder="Seller" class="form-control" />
+                </td>
+                <td>
+                    <input type="text" @oninput="DateSet" placeholder="@datePick.ToString("dd/MM/yyyy")" onfocus="(this.type='date')" onblur="(this.value == '' ? this.type='text' : this.type='date')" class="form-control">
+                </td>
+                <td>
+                    <select @onchange="OnStatusChanged" value="UnKnow" class="form-control-sm">
+                        @foreach (var status in new List<string> { "Completed", "Pending", datePick >= DateTime.Now.AddDays(1).Date ? "PreOrder" : "UnKnow"})
+                        {
+                            <option value="@status" style="font-size: 0.8rem;">@status</option>
+                        }
+                    </select>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-success" @onclick="() => AddTransaction(newDTO)">Save</button>
+                    <button class="btn btn-sm btn-secondary" @onclick="HideAddRow">Cancel</button>
+                </td>
+            </tr>
+        }
+        @if (isEdit)
+        {
+            <tr>
+                <td>
+                    <input type="text" placeholder="@editDTO.Order.Id" class="form-control" readonly />
+                </td>
+                <td>
+                    <select @onchange="OnProductChanged" value="@editDTO.Product.Id" class="form-control-sm">
+                        @foreach (var product in proDTOs)
+                        {
+                            <option value="@product.Id" style="font-size: 0.8rem;">@product.Name</option>
+                        }
+                    </select>
+                </td>
+                <td>
+                    <input type="number" @bind-value="@editDTO.Quantity" @oninput="GetTotalPrice" class="form-control" />
+                </td>
+                <td>
+                    <input type="number" placeholder="@editDTO.TotalPrice" class="form-control" readonly />
+                </td>
+                <td>
+                    <input type="text" placeholder="@editDTO.Buyer" class="form-control" />
+                </td>
+                <td>
+                    <input type="text" @bind="editDTO.Seller" placeholder="@editDTO.Seller" class="form-control" />
+                </td>
+                <td>
+                    <input type="text" @oninput="DateSet" placeholder="@editDTO.Time.ToString("dd/MM/yyyy")" onfocus="(this.type='date')" onblur="(this.value == '' ? this.type='text' : this.type='date')" class="form-control" >
+                </td>
+                <td>
+                    <select @onchange="OnStatusChanged" value="@editDTO.Status" class="form-control-sm">
+                        @foreach (var status in new string[] { "Completed", "Pending", editDTO.Time >= DateTime.Now.AddDays(1).Date ? "PreOrder" : "UnKnow" })
+                        {
+                            <option value="@status" style="font-size: 0.8rem;">@status</option>
+                        }
+                    </select>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-success" @onclick="() => AddTransaction(editDTO)">Save</button>
+                    <button class="btn btn-sm btn-secondary" @onclick="HideAddRow">Cancel</button>
+                </td>
+            </tr>
+        }
+        @if (FilteredTransactions != null && FilteredTransactions.Any())
+        {
+            @foreach (var transaction in FilteredTransactions)
+            {
+                <tr>
+                    <td>@transaction.Order.Id</td>
+                    <td>@transaction.Product.Name</td>
+                    <td>@transaction.Quantity</td>
+                    <td>@transaction.TotalPrice</td>
+                    <td>@transaction.Buyer</td>
+                    <td>@transaction.Seller</td>
+                    <td>@transaction.Time.ToString("dd/MM/yyyy")</td>
+                    <td>@transaction.Status</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" @onclick="ShowAddRow">
+                            Add
+                        </button>
+                        <button class="btn btn-sm btn-danger" @onclick="() =>EditEnable(transaction.Order.Id)">
+                            Edit
+                        </button>
+                        <button class="btn btn-sm btn-danger"
+                                @onclick="() => DeleteTransaction(transaction.Order.Id, transaction.Product.Id)">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+                    
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="8" class="text-center">No transactions available.</td>
+            </tr>
+        }
+        
+    </tbody>
+</table>

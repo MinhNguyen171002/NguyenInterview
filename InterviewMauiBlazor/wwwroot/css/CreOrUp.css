@@ -1,0 +1,53 @@
+﻿.divider-text {
+    position: relative;
+    text-align: center;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+    .divider-text:after {
+        content: "";
+        position: absolute;
+        width: 100%;
+        border-bottom: 1px solid #ddd;
+        top: 55%;
+        left: 0;
+        z-index: 1;
+    }
+
+input {
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.form-control {
+    display: block;
+    width: 100%;
+    padding: 6px 12px;
+    font-size: 19.2px;
+    line-height: 40px;
+    color: #495057;
+    background-color: #fff;
+    background-clip: padding-box;
+    border-radius: 4px;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+.mandatory::after {
+    content: "*";
+    color: #ff0000;
+}
+
+.form-group .form-control {
+    display: block;
+    width: 100%;
+    padding: 6px 12px;
+    font-size: 19.2px;
+    line-height: 40px;
+    color: #495057;
+    background-color: #fff;
+    background-clip: padding-box;
+    border-radius: 4px;
+    border: 1.5px solid #192a56;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
