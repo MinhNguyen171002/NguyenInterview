@@ -1,0 +1,14 @@
+﻿.content {
+    height: 100%;
+    width: 100%;
+    overflow: visible !important;
+}
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        border-color: #5a6268;
+    }

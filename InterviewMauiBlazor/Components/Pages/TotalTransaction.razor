@@ -1,0 +1,84 @@
+﻿@page "/totaltransaction"
+
+@code {
+    [Parameter]
+    public DateTime StartDate { get; set; }
+    [Parameter]
+    public DateTime EndDate { get; set; }
+
+    private string Status { get; set; }
+
+    private TotalTransactionDTO dTO { get; set; } = new TotalTransactionDTO();
+
+    protected override void OnInitialized()
+    {
+        SetDefaultDates();
+        UpdateTransactionData();
+    }
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        SetDefaultDates();
+        UpdateTransactionData();
+    }
+    private void SetDefaultDates()
+    {
+        if (StartDate == default)
+        {
+            StartDate = DateTime.Now.AddDays(-7);
+        }
+        if (EndDate == default)
+        {
+            EndDate = DateTime.Now;
+        }
+        if (StartDate > EndDate)
+        {
+            EndDate = StartDate;
+        }
+    }
+    private void UpdateTransactionData()
+    {
+        dTO = transactionServices.GetTotal(StartDate, EndDate, null);
+        this.Status = "total";
+        StateHasChanged();
+    }
+    private void OnClickHandler(string Status)
+    {
+        dTO = transactionServices.GetTotal(StartDate, EndDate, Status);
+        this.Status = Status.ToLower();
+        StateHasChanged();
+    }
+    private void ResetMethod()
+    {
+        UpdateTransactionData();
+    }
+}
+
+<div class="transaction-summary">
+    <button type="button" class="btn btn-primary" @onclick="@(() => OnClickHandler("Completed"))">Complete</button>
+    <button type="button" class="btn btn-warning" @onclick="@(() => OnClickHandler("Pending"))">Pending</button>
+    <button type="button" class="btn btn-tertiary" @onclick="@(() => OnClickHandler("PreOrder"))">PreOrder</button>
+    <button type="button" class="btn btn-secondary" @onclick="ResetMethod">
+        <i class="fas fa-undo-alt"></i> Reset
+    </button>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th colspan="2" class="table-header">Transaction in: @StartDate.ToString("dd/MM/yyyy") - @EndDate.ToString("dd/MM/yyyy")</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Total @Status transaction: @dTO.TotalTransaction</td>
+            </tr>
+            <tr>
+                <td>Total value: @dTO.TotalValue</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+
+
+
+

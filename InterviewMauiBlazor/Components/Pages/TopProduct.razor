@@ -1,0 +1,23 @@
+﻿@page "/topproduct"
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Grids
+
+
+@code {
+    private List<ProductStatsDTO> DTO { get; set; } = new List<ProductStatsDTO>();
+    protected override void OnInitialized()
+    {
+        DTO = transactionServices.GetTopProduct();
+    }
+}
+<SfGrid  DataSource="@DTO" AllowPaging="true">
+    <GridPageSettings PageSize="5"></GridPageSettings>
+    <GridColumns>
+        <GridColumn Field="ProductId" HeaderText="Product Id" Width="150"></GridColumn>
+        <GridColumn Field="ProductName" HeaderText="Product Name" Width="150"></GridColumn>
+        <GridColumn Field="TotalQuantity" HeaderText="Total Quantity" Width="150"></GridColumn>
+    </GridColumns>
+</SfGrid>
+
+
+

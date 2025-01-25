@@ -1,7 +1,11 @@
-﻿namespace InterviewMauiBlazor.Database.Entities
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
+
+namespace InterviewMauiBlazor.Database.Entities
 {
     public class Transaction
     {
+        
         public int OrderId { get; set; }
         public Order Order { get; set; }
         public int ProductId { get; set; }
