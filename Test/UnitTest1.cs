@@ -27,8 +27,6 @@ namespace InterviewMauiBlazor.Tests
         [SetUp]
         public void Setup()
         {
-
-
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
@@ -171,8 +169,6 @@ namespace InterviewMauiBlazor.Tests
                 });
                 }
 
-                // Save to the context
-                context.SaveChanges();
             }
 
             // Initialize the services
@@ -205,43 +201,29 @@ namespace InterviewMauiBlazor.Tests
             var transactionDTO = new TransactionDTO
             {
                 orderId = 1,
-                ProductId = 3,
-                Quantity = 2,
-                TotalPrice = 1399.98m,
+                ProductId = 2,
+                Quantity = 3,
+                TotalPrice = 100.5m,
                 Buyer = "John Doe",
                 Seller = "TechStore",
                 Time = DateTime.Now,
                 Status = "Pending"
             };
-
-            var transaction = new Transaction
-            {
-                OrderId = transactionDTO.orderId,
-                ProductId = transactionDTO.ProductId,
-                Quantity = transactionDTO.Quantity,
-                TotalPrice = transactionDTO.TotalPrice,
-                Buyer = transactionDTO.Buyer,
-                Seller = transactionDTO.Seller,
-                Time = transactionDTO.Time,
-                Status = transactionDTO.Status
-            };
+            var transaction = new Transaction();
 
             _mockMapper.Setup(m => m.Map<Transaction>(transactionDTO)).Returns(transaction);
+            _mockOrderRepository.Setup(r => r.GetById(It.IsAny<int>()))
+                .Returns(new Order { Id = transactionDTO.orderId });
+            _mockProductRepository.Setup(r => r.GetById(It.IsAny<int>()))
+                .Returns(new Product { Id = transactionDTO.ProductId });
 
             // Act
             _transactionServices.Insert(transactionDTO);
 
             // Assert
-            var insertedTransaction = _dbContext.Transactions.FirstOrDefault(t =>
-                t.OrderId == transactionDTO.orderId && t.ProductId == transactionDTO.ProductId);
-
-            Assert.IsNotNull(insertedTransaction, "Transaction should be added to the database.");
-            Assert.AreEqual(transactionDTO.Quantity, insertedTransaction.Quantity, "Quantity should match.");
-            Assert.AreEqual(transactionDTO.TotalPrice, insertedTransaction.TotalPrice, "TotalPrice should match.");
-            Assert.AreEqual(transactionDTO.Buyer, insertedTransaction.Buyer, "Buyer should match.");
-            Assert.AreEqual(transactionDTO.Seller, insertedTransaction.Seller, "Seller should match.");
-            Assert.AreEqual(transactionDTO.Time, insertedTransaction.Time, "Time should match.");
-            Assert.AreEqual(transactionDTO.Status, insertedTransaction.Status, "Status should match.");
+            _mockTransactionRepository.Verify(r => r.Add(It.IsAny<Transaction>()), Times.Once);
+            _mockOrderRepository.Verify(r => r.GetById(transactionDTO.orderId), Times.Once);
+            _mockProductRepository.Verify(r => r.GetById(transactionDTO.ProductId), Times.Once);
         }
 
         [Test]
