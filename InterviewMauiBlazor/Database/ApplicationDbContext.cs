@@ -26,18 +26,15 @@ namespace InterviewMauiBlazor.Database
                 .WithOne(o => o.Customer)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            builder.Entity<Order>()
-                .HasMany(o => o.Transactions)
-                .WithOne(t => t.Order)
+            builder.Entity<Transaction>()
+                .HasOne(t => t.Product)
+                .WithMany(t=>t.Transactions)
                 .OnDelete(DeleteBehavior.SetNull);
 
             builder.Entity<Transaction>()
-                .HasKey(t => new { t.OrderId, t.ProductId });
-
-            builder.Entity<Transaction>()
-                .HasOne(t => t.Product)
-                .WithMany()
-                .HasForeignKey(t => t.ProductId);
+                .HasOne(t => t.Order)
+                .WithMany(t => t.Transactions)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Customer>().HasData(
             new Customer { Id = 1, Name = "John Doe", Email = "john@example.com" },
@@ -58,53 +55,106 @@ namespace InterviewMauiBlazor.Database
                 new Order { Id = 5, OrderDate = now.AddDays(-2).Date, CustomerId = 2 },
                 new Order { Id = 6, OrderDate = now.AddDays(-1).Date, CustomerId = 1 },
                 new Order { Id = 7, OrderDate = now, CustomerId = 1 },
-                new Order { Id = 8, OrderDate = now.AddDays(1), CustomerId = 2 }
+                new Order { Id = 8, OrderDate = now, CustomerId = 2 },
+                new Order { Id = 9, OrderDate = now.AddDays(1), CustomerId = 2 }
             );
 
             builder.Entity<Transaction>().HasData(
                 new Transaction
                 {
+                    TransactionId = 1,
                     OrderId = 1,
                     ProductId = 2,
                     Quantity = 2,
                     TotalPrice = 1199.98m,
-                    Buyer = "Jane Smith",
+                    Buyer = "John Doe",
                     Seller = "TechStore",
-                    Time = DateTime.Now.AddDays(-2).Date,
+                    Time = now.AddDays(-6).Date,
                     Status = "Completed"
                 },
                 new Transaction
                 {
+                    TransactionId = 2,
                     OrderId = 2,
                     ProductId = 3,
                     Quantity = 2,
                     TotalPrice = 1399.98m,
                     Buyer = "Jane Smith",
                     Seller = "TechStore",
-                    Time = DateTime.Now.AddDays(-1).Date,
+                    Time = now.AddDays(-5).Date,
                     Status = "Pending"
                 },
                 new Transaction
                 {
+                    TransactionId = 3,
                     OrderId = 3,
                     ProductId = 1,
                     Quantity = 1,
                     TotalPrice = 999.99m,
                     Buyer = "John Doe",
                     Seller = "TechStore",
-                    Time = DateTime.Now.AddDays(-1).Date,
+                    Time = now.AddDays(-4).Date,
                     Status = "Completed"
                 },
                 new Transaction
                 {
+                    TransactionId = 4,
                     OrderId = 4,
                     ProductId = 2,
                     Quantity = 2,
                     TotalPrice = 1199.98m,
                     Buyer = "Jane Smith",
                     Seller = "TechStore",
+                    Time = now.AddDays(-3).Date,
+                    Status = "Pending"
+                },
+                new Transaction
+                {
+                    TransactionId = 5,
+                    OrderId = 7,
+                    ProductId = 2,
+                    Quantity = 2,
+                    TotalPrice = 1199.98m,
+                    Buyer = "John Doe",
+                    Seller = "TechStore",
                     Time = now,
                     Status = "Pending"
+                },
+                new Transaction
+                {
+                    TransactionId = 6,
+                    OrderId = 7,
+                    ProductId = 3,
+                    Quantity = 2,
+                    TotalPrice = 1399.98m,
+                    Buyer = "John Doe",
+                    Seller = "TechStore",
+                    Time = now,
+                    Status = "Pending"
+                },
+                new Transaction
+                {
+                    TransactionId = 7,
+                    OrderId = 8,
+                    ProductId = 2,
+                    Quantity = 2,
+                    TotalPrice = 1199.98m,
+                    Buyer = "Jane Smith",
+                    Seller = "TechStore",
+                    Time = now,
+                    Status = "Completed"
+                },
+                new Transaction
+                {
+                    TransactionId = 8,
+                    OrderId = 9,
+                    ProductId = 2,
+                    Quantity = 2,
+                    TotalPrice = 1199.98m,
+                    Buyer = "Jane Smith",
+                    Seller = "TechStore",
+                    Time = now.AddDays(1),
+                    Status = "PreOrder"
                 }
             );
         }

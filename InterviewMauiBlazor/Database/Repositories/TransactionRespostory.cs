@@ -12,18 +12,14 @@ namespace InterviewMauiBlazor.Database.Repositories
 {
     public interface ITransactionRepositories : IRepository<Transaction>
     {
-        Transaction getByKeys(object proid,object orderid);
+
     }
     public class TransactionRepository : RepositoryBase<Transaction>, ITransactionRepositories
     {
         public TransactionRepository(ApplicationDbContext dbContext) : base(dbContext)
         {
 
-        }
-        public Transaction getByKeys(object proid, object orderid)
-        {
-            return dbset.Find(proid, orderid);
-        }        
+        }  
     }
     
 }

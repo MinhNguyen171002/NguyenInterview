@@ -5,7 +5,9 @@ namespace InterviewMauiBlazor.Database.Entities
 {
     public class Transaction
     {
-        
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int TransactionId {  get; set; }      
         public int OrderId { get; set; }
         public Order Order { get; set; }
         public int ProductId { get; set; }

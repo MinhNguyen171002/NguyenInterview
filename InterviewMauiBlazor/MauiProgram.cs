@@ -38,7 +38,10 @@ namespace InterviewMauiBlazor
             builder.Services.AddSyncfusionBlazor();
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseInMemoryDatabase("InMemoryDb"));           
+            {
+                options.UseInMemoryDatabase("InMemoryDb");
+                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+            }, ServiceLifetime.Scoped);
 
             builder.Services.AddIdentityCore<IdentityUser>()
             .AddEntityFrameworkStores<ApplicationDbContext>();

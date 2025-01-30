@@ -44,7 +44,11 @@
     }
     private void OnClickHandler(string Status)
     {
-        dTO = transactionServices.GetTotal(StartDate, EndDate, Status);
+        dTO = transactionServices.GetTotal(
+                Status == "PreOrder" ? DateTime.Now : StartDate,
+                Status == "PreOrder" ? DateTime.Now.AddDays(7) : EndDate,
+                Status
+            );
         this.Status = Status.ToLower();
         StateHasChanged();
     }
@@ -64,7 +68,11 @@
     <table class="table table-bordered table-striped">
         <thead>
             <tr>
-                <th colspan="2" class="table-header">Transaction in: @StartDate.ToString("dd/MM/yyyy") - @EndDate.ToString("dd/MM/yyyy")</th>
+                <th colspan="2" class="table-header">
+                    @(Status.Equals("PreOrder", StringComparison.OrdinalIgnoreCase) ?
+                        "Total pre order in one week" :
+                        $"Transaction in: {StartDate.ToString("dd/MM/yyyy")} - {EndDate.ToString("dd/MM/yyyy")}")
+                </th>
             </tr>
         </thead>
         <tbody>

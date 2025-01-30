@@ -8,7 +8,7 @@ namespace InterviewMauiBlazor.DTO
 {
     public class TransactionDTO
     {
-
+        public int TransactionId { get; set; }
         public int ProductId { get; set; }
         public int orderId { get; set; }
         public int Quantity { get; set; } = 0;

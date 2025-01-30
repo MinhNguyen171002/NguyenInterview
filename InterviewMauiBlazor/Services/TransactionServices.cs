@@ -4,6 +4,8 @@ using InterviewMauiBlazor.Database.Repositories;
 using InterviewMauiBlazor.DTO;
 using Syncfusion.Blazor.Data;
 using AutoMapper;
+using System;
+using Microsoft.EntityFrameworkCore;
 
 namespace InterviewMauiBlazor.Services
 {
@@ -15,7 +17,7 @@ namespace InterviewMauiBlazor.Services
         List<ProductStatsDTO> GetTopProduct();
         void Insert(TransactionDTO TransactionDTO);
         void Update(TransactionDTO TransactionDTO);
-        void Delete(int proid, int orid);
+        void Delete(int id);
         List<ProductDTO> GetProducts();
         List<OrderDTO> GetOrders();
 
@@ -24,8 +26,8 @@ namespace InterviewMauiBlazor.Services
     {
         private ApplicationDbContext dBContext;
         private ITransactionRepositories transactionRespostory;
-        private IProductRepositories ProductRespostory;
-        private IOrderRepositories OrderRespostory;
+        private IProductRepositories productRespostory;
+        private IOrderRepositories orderRespostory;
         private IMapper _mapper;
         public TransactionServices(ApplicationDbContext dBContext, IMapper mapper, 
             ITransactionRepositories transactionRespostory,
@@ -35,8 +37,8 @@ namespace InterviewMauiBlazor.Services
             this.dBContext = dBContext;
             this.transactionRespostory = transactionRespostory;
             this._mapper = mapper;
-            this.ProductRespostory = productRepository;
-            OrderRespostory = orderRepository;
+            this.productRespostory = productRepository;
+            orderRespostory = orderRepository;
         }
         public void Save()
         {
@@ -44,36 +46,41 @@ namespace InterviewMauiBlazor.Services
         }
         public void Insert(TransactionDTO TransactionDTO)
         {
+            var Transaction = _mapper.Map<Transaction>(TransactionDTO);
+            Transaction.Order = orderRespostory.GetById(TransactionDTO.orderId);
+            Transaction.Product = productRespostory.GetById(TransactionDTO.ProductId);
 
-            var existingTransaction = transactionRespostory.Get(t => t.OrderId == TransactionDTO.orderId);
-            if (existingTransaction == null)
-            {
-                existingTransaction = _mapper.Map<Transaction>(TransactionDTO);
-                existingTransaction.Product = ProductRespostory.GetById(TransactionDTO.ProductId);
-                existingTransaction.Order = OrderRespostory.GetById(TransactionDTO.orderId);
-                transactionRespostory.Add(existingTransaction);
-                Save();
-            }
+            dBContext.Attach(Transaction.Order);
+            dBContext.Attach(Transaction.Product);
+
+            transactionRespostory.Add(Transaction);
+            Save();
         }
         public void Update(TransactionDTO TransactionDTO)
         {
-            var existingTransaction = transactionRespostory.Get(t => t.OrderId == TransactionDTO.orderId);
+            var existingTransaction = transactionRespostory.Get(t=>t.TransactionId == TransactionDTO.TransactionId, "Product,Order",true);
             if (existingTransaction != null)
             {
-                transactionRespostory.Delete(existingTransaction);
+                existingTransaction.OrderId = TransactionDTO.orderId;
+                existingTransaction.ProductId = TransactionDTO.ProductId;
+                existingTransaction.Quantity = TransactionDTO.Quantity;
+                existingTransaction.TotalPrice = TransactionDTO.TotalPrice;
+                existingTransaction.Buyer = TransactionDTO.Buyer;
+                existingTransaction.Seller = TransactionDTO.Seller;
+                existingTransaction.Time = TransactionDTO.Time;
+                existingTransaction.Status = TransactionDTO.Status;
+                existingTransaction.Order = orderRespostory.GetById(TransactionDTO.orderId);
+                existingTransaction.Product = productRespostory.GetById(TransactionDTO.ProductId);
+                transactionRespostory.Update(existingTransaction);
+
                 Save();
 
-                 var newTransaction = _mapper.Map<Transaction>(TransactionDTO);
-
-                newTransaction.Product = ProductRespostory.GetById(TransactionDTO.ProductId);
-                newTransaction.Order = OrderRespostory.GetById(TransactionDTO.orderId);
-                transactionRespostory.Add(newTransaction);
-                Save();
             }
+
         }
-        public void Delete(int proid,int orid)
+        public void Delete(int id)
         {
-            var existingTransaction = transactionRespostory.getByKeys(proid,orid);
+            var existingTransaction = transactionRespostory.GetById(id);
             if (existingTransaction != null)
             {
                 transactionRespostory.Delete(existingTransaction);
@@ -119,11 +126,14 @@ namespace InterviewMauiBlazor.Services
             List<TransactionDTO> transactions = transactionRespostory.GetList(null, null, "Product,Order", 0, 0)
                 .Select(t => new TransactionDTO
                 {
+                    TransactionId = t.TransactionId,
                     Time = t.Time,
                     TotalPrice = t.TotalPrice,
                     Buyer = t.Buyer,
                     Seller = t.Seller,
                     Status = t.Status,
+                    orderId = t.OrderId,
+                    ProductId = t.ProductId,
                     Order = _mapper.Map<OrderDTO>(t.Order),
                     Product=_mapper.Map<ProductDTO>(t.Product),
                     Quantity = t.Quantity,
@@ -134,11 +144,11 @@ namespace InterviewMauiBlazor.Services
 
         public List<ProductDTO> GetProducts()
         {
-            return _mapper.Map<List<ProductDTO>>(ProductRespostory.GetAll());
+            return _mapper.Map<List<ProductDTO>>(productRespostory.GetAll());
         }
         public List<OrderDTO> GetOrders()
         {
-            return OrderRespostory.GetList(null, null, "Customer", 0, 0).Select(
+            return orderRespostory.GetList(null, null, "Customer", 0, 0).Select(
                  o => new OrderDTO
                  {
                      CustomerName = o.Customer.Name,

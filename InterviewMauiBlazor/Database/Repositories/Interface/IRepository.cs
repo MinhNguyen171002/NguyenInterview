@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,7 @@ namespace InterviewMauiBlazor.Database.Repositories.Interface
 
         void DeleteRange(IEnumerable<T> entities);
         void Update(T entity);
+        void Detach(T entity);
         void Delete(T entity);
         void Delete(Expression<Func<T, bool>> where);
         void ExecuteDelete(Expression<Func<T, bool>> where);
@@ -28,7 +30,7 @@ namespace InterviewMauiBlazor.Database.Repositories.Interface
 
         T GetById(object Id);
 
-        T Get(Expression<Func<T, bool>> where);
+        T Get(Expression<Func<T, bool>> where, string includeProperties = "", bool astracking = false);
         IEnumerable<T> GetAll();
         IEnumerable<T> GetMany(Expression<Func<T, bool>> where);
 
@@ -57,10 +59,13 @@ namespace InterviewMauiBlazor.Database.Repositories.Interface
 
         public virtual void Update(T entity)
         {
-            dbset.Attach(entity);
+            _dbContext.Attach(entity);
             _dbContext.Entry(entity).State = EntityState.Modified;
         }
-
+        public virtual void Detach(T entity)
+        {
+            _dbContext.Entry(entity).State = EntityState.Detached;
+        }
         public virtual void Delete(T entity)
         {
             dbset.Remove(entity);
@@ -137,14 +142,24 @@ namespace InterviewMauiBlazor.Database.Repositories.Interface
 
         public virtual IEnumerable<T> GetMany(Expression<Func<T, bool>> where)
         {
-            return dbset.Where(where).ToList();
+            return dbset.Where(where);
         }
 
-        public T Get(Expression<Func<T, bool>> where)
+        public T Get(Expression<Func<T, bool>> where, string includeProperties = "",bool astracking = false)
         {
-            return dbset.Where(where).FirstOrDefault<T>();
+            IQueryable<T> query = dbset;
+            if (astracking)
+            {
+                query = query.AsTracking();
+            }
+            foreach (var includeProperty in includeProperties.Split
+                (new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                query = query.Include(includeProperty);
+            }
+            return query.FirstOrDefault(where);
         }
-
+       
         public virtual bool Any(Expression<Func<T, bool>> where)
         {
             return dbset.Where(where).Any<T>();

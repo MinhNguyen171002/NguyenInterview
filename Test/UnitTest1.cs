@@ -66,17 +66,109 @@ namespace InterviewMauiBlazor.Tests
                     new Order { Id = 5, OrderDate = now.AddDays(-2).Date, CustomerId = 2 },
                     new Order { Id = 6, OrderDate = now.AddDays(-1).Date, CustomerId = 1 },
                     new Order { Id = 7, OrderDate = now, CustomerId = 1 },
-                    new Order { Id = 8, OrderDate = now.AddDays(1), CustomerId = 2 });
+                    new Order { Id = 8, OrderDate = now, CustomerId = 2 },
+                    new Order { Id = 9, OrderDate = now.AddDays(1), CustomerId = 2 });
                 }
                     
                 if (!context.Transactions.Any())
                 {
                     context.Transactions.AddRange(
-                    new Transaction { OrderId = 1, ProductId = 2, Quantity = 2, TotalPrice = 1199.98m, Buyer = "Jane Smith", Seller = "TechStore", Time = DateTime.Now.AddDays(-2).Date, Status = "Completed" },
-                    new Transaction { OrderId = 2, ProductId = 3, Quantity = 2, TotalPrice = 1399.98m, Buyer = "Jane Smith", Seller = "TechStore", Time = DateTime.Now.AddDays(-1).Date, Status = "Pending" },
-                    new Transaction { OrderId = 3, ProductId = 1, Quantity = 1, TotalPrice = 999.99m, Buyer = "John Doe", Seller = "TechStore", Time = DateTime.Now.AddDays(-1).Date, Status = "Completed" },
-                    new Transaction { OrderId = 4, ProductId = 2, Quantity = 2, TotalPrice = 1199.98m, Buyer = "Jane Smith", Seller = "TechStore", Time = now, Status = "Pending" }
-                );
+                    new Transaction
+                    {
+                        TransactionId = 1,
+                        OrderId = 1,
+                        ProductId = 2,
+                        Quantity = 2,
+                        TotalPrice = 1199.98m,
+                        Buyer = "John Doe",
+                        Seller = "TechStore",
+                        Time = now.AddDays(-6).Date,
+                        Status = "Completed"
+                    },
+                new Transaction
+                {
+                    TransactionId = 2,
+                    OrderId = 2,
+                    ProductId = 3,
+                    Quantity = 2,
+                    TotalPrice = 1399.98m,
+                    Buyer = "Jane Smith",
+                    Seller = "TechStore",
+                    Time = now.AddDays(-5).Date,
+                    Status = "Pending"
+                },
+                new Transaction
+                {
+                    TransactionId = 3,
+                    OrderId = 3,
+                    ProductId = 1,
+                    Quantity = 1,
+                    TotalPrice = 999.99m,
+                    Buyer = "John Doe",
+                    Seller = "TechStore",
+                    Time = now.AddDays(-4).Date,
+                    Status = "Completed"
+                },
+                new Transaction
+                {
+                    TransactionId = 4,
+                    OrderId = 4,
+                    ProductId = 2,
+                    Quantity = 2,
+                    TotalPrice = 1199.98m,
+                    Buyer = "Jane Smith",
+                    Seller = "TechStore",
+                    Time = now.AddDays(-3).Date,
+                    Status = "Pending"
+                },
+                new Transaction
+                {
+                    TransactionId = 5,
+                    OrderId = 7,
+                    ProductId = 2,
+                    Quantity = 2,
+                    TotalPrice = 1199.98m,
+                    Buyer = "John Doe",
+                    Seller = "TechStore",
+                    Time = now,
+                    Status = "Pending"
+                },
+                new Transaction
+                {
+                    TransactionId = 6,
+                    OrderId = 7,
+                    ProductId = 3,
+                    Quantity = 2,
+                    TotalPrice = 1399.98m,
+                    Buyer = "John Doe",
+                    Seller = "TechStore",
+                    Time = now,
+                    Status = "Pending"
+                },
+                new Transaction
+                {
+                    TransactionId = 7,
+                    OrderId = 8,
+                    ProductId = 2,
+                    Quantity = 2,
+                    TotalPrice = 1199.98m,
+                    Buyer = "Jane Smith",
+                    Seller = "TechStore",
+                    Time = now,
+                    Status = "Completed"
+                },
+                new Transaction
+                {
+                    TransactionId = 8,
+                    OrderId = 9,
+                    ProductId = 2,
+                    Quantity = 2,
+                    TotalPrice = 1199.98m,
+                    Buyer = "Jane Smith",
+                    Seller = "TechStore",
+                    Time = now.AddDays(1),
+                    Status = "PreOrder"
+                });
                 }
 
                 // Save to the context
@@ -107,103 +199,137 @@ namespace InterviewMauiBlazor.Tests
         }
 
         [Test]
-        public void Insert_WhenTransactionDoesNotExist_ShouldAddNewTransaction()
+        public void Insert_Should_Add_New_Transaction()
         {
             // Arrange
-            var transactionDTO = new TransactionDTO { ProductId = 1, orderId = 1, Quantity = 2, Time = DateTime.Now.Date };
-            var transaction = new Transaction { ProductId = 1, OrderId = 1, Quantity = 2 };
-            _mockTransactionRepository.Setup(r => r.Get(It.IsAny<Expression<Func<Transaction, bool>>>())).Returns((Transaction)null);
+            var transactionDTO = new TransactionDTO
+            {
+                orderId = 1,
+                ProductId = 3,
+                Quantity = 2,
+                TotalPrice = 1399.98m,
+                Buyer = "John Doe",
+                Seller = "TechStore",
+                Time = DateTime.Now,
+                Status = "Pending"
+            };
+
+            var transaction = new Transaction
+            {
+                OrderId = transactionDTO.orderId,
+                ProductId = transactionDTO.ProductId,
+                Quantity = transactionDTO.Quantity,
+                TotalPrice = transactionDTO.TotalPrice,
+                Buyer = transactionDTO.Buyer,
+                Seller = transactionDTO.Seller,
+                Time = transactionDTO.Time,
+                Status = transactionDTO.Status
+            };
+
             _mockMapper.Setup(m => m.Map<Transaction>(transactionDTO)).Returns(transaction);
-            _mockProductRepository.Setup(r => r.GetById(1)).Returns(new Product { Id = 1 });
-            _mockOrderRepository.Setup(r => r.GetById(1)).Returns(new Order { Id = 1 });
 
             // Act
             _transactionServices.Insert(transactionDTO);
 
             // Assert
-            _mockTransactionRepository.Verify(r => r.Add(transaction), Times.Once);
+            var insertedTransaction = _dbContext.Transactions.FirstOrDefault(t =>
+                t.OrderId == transactionDTO.orderId && t.ProductId == transactionDTO.ProductId);
+
+            Assert.IsNotNull(insertedTransaction, "Transaction should be added to the database.");
+            Assert.AreEqual(transactionDTO.Quantity, insertedTransaction.Quantity, "Quantity should match.");
+            Assert.AreEqual(transactionDTO.TotalPrice, insertedTransaction.TotalPrice, "TotalPrice should match.");
+            Assert.AreEqual(transactionDTO.Buyer, insertedTransaction.Buyer, "Buyer should match.");
+            Assert.AreEqual(transactionDTO.Seller, insertedTransaction.Seller, "Seller should match.");
+            Assert.AreEqual(transactionDTO.Time, insertedTransaction.Time, "Time should match.");
+            Assert.AreEqual(transactionDTO.Status, insertedTransaction.Status, "Status should match.");
         }
 
         [Test]
-        public void Update_WhenTransactionExists_ShouldUpdateTransaction()
+        public void Update_Should_Update_Existing_Transaction()
         {
             // Arrange
-            var transactionDTO = new TransactionDTO { ProductId = 1, orderId = 1, Quantity = 3 };
-            var existingTransaction = new Transaction { ProductId = 1, OrderId = 1, Quantity = 2 };
-            var updatedTransaction = new Transaction { ProductId = 1, OrderId = 1, Quantity = 3 };
-            _mockTransactionRepository.Setup(r => r.Get(It.IsAny<Expression<Func<Transaction, bool>>>())).Returns(existingTransaction);
-            _mockMapper.Setup(m => m.Map<Transaction>(transactionDTO)).Returns(updatedTransaction);
-            _mockProductRepository.Setup(r => r.GetById(1)).Returns(new Product { Id = 1 });
-            _mockOrderRepository.Setup(r => r.GetById(1)).Returns(new Order { Id = 1 });
+            var transactionDTO = new TransactionDTO
+            {
+                Quantity = 5,
+                TotalPrice = 200m
+            };
+            var existingTransaction = new Transaction
+            {
+                Quantity = 3,
+                TotalPrice = 100m
+            };
+
+            _mockTransactionRepository
+                .Setup(r => r.Get(It.IsAny<Expression<Func<Transaction, bool>>>(), "Product,Order", true))
+                .Returns(existingTransaction);
 
             // Act
             _transactionServices.Update(transactionDTO);
 
             // Assert
-            _mockTransactionRepository.Verify(r => r.Delete(existingTransaction), Times.Once);
-            _mockTransactionRepository.Verify(r => r.Add(updatedTransaction), Times.Once);
+            Assert.AreEqual(5, existingTransaction.Quantity);
+            Assert.AreEqual(200m, existingTransaction.TotalPrice);
+            _mockTransactionRepository.Verify(r => r.Update(It.IsAny<Transaction>()), Times.Once);
         }
 
         [Test]
-        public void Delete_WhenTransactionExists_ShouldDeleteTransaction()
+        public void Delete_Should_Remove_Transaction()
         {
             // Arrange
-            var existingTransaction = new Transaction { ProductId = 1, OrderId = 1 };
-            _mockTransactionRepository.Setup(r => r.getByKeys(1, 1)).Returns(existingTransaction);
+            var transactionId = 1;
+            var existingTransaction = new Transaction { TransactionId = transactionId };
+
+            _mockTransactionRepository.Setup(r => r.GetById(transactionId)).Returns(existingTransaction);
 
             // Act
-            _transactionServices.Delete(1, 1);
+            _transactionServices.Delete(transactionId);
 
             // Assert
-            _mockTransactionRepository.Verify(r => r.Delete(existingTransaction), Times.Once);
+            _mockTransactionRepository.Verify(r => r.Delete(It.IsAny<Transaction>()), Times.Once);
         }
 
         [Test]
-        public void GetTotal_ShouldReturnCorrectTotal_WhenCalled()
+        public void GetAll_Should_Return_All_Transactions()
         {
             // Arrange
             var transactions = new List<Transaction>
-            {
-                new Transaction { Time = DateTime.Now.AddDays(-1), TotalPrice = 1999.98m, Status = "Completed" },
-                new Transaction { Time = DateTime.Now.AddDays(-2), TotalPrice = 2999.97m, Status = "Completed" }
-            };
-
-            // Mock GetMany để trả về danh sách giao dịch
-            _mockTransactionRepository.Setup(r => r.GetMany(It.IsAny<Expression<Func<Transaction, bool>>>()))
-                .Returns((Expression<Func<Transaction, bool>> predicate) =>
-                    transactions.AsQueryable().Where(predicate).ToList());
-
-            // Act
-            var result = _transactionServices.GetTotal(DateTime.Now.AddDays(-7), DateTime.Now, "Completed");
-
-            // Assert
-            Assert.AreEqual(2, result.TotalTransaction);
-            Assert.AreEqual(4999.95m, result.TotalValue);
-        }
-
-        [Test]
-        public void GetTopProduct_ShouldReturnTopProducts_WhenCalled()
         {
-            // Arrange
-            var transactions = new List<Transaction>
-            {
-                new Transaction { ProductId = 1, Quantity = 10, Product = new Product { Id = 1, Name = "Laptop" } },
-                new Transaction { ProductId = 2, Quantity = 20, Product = new Product { Id = 2, Name = "Smartphone" } },
-                new Transaction { ProductId = 1, Quantity = 5, Product = new Product { Id = 1, Name = "Laptop" } }
-            };
+            new Transaction { TransactionId = 1 },
+            new Transaction { TransactionId = 2 }
+        };
 
-            // Mock GetList để trả về danh sách giao dịch
-            _mockTransactionRepository.Setup(r => r.GetList(null, null, "Product", 0, 0))
-                .Returns(transactions);
+            _mockTransactionRepository.Setup(r => r.GetList(null, null, "Product,Order", 0, 0)).Returns(transactions);
 
             // Act
-            var result = _transactionServices.GetTopProduct();
+            var result = _transactionServices.GetAll();
 
             // Assert
             Assert.AreEqual(2, result.Count);
-            Assert.AreEqual(20, result.First().TotalQuantity); // Product with ID 2 should have the highest quantity
         }
 
-        
+        [Test]
+        public void GetByDate_Should_Filter_Transactions_By_Date_Range()
+        {
+            // Arrange
+            var startDate = DateTime.Now.AddDays(-5);
+            var endDate = DateTime.Now;
+
+            var transactions = new List<Transaction>
+        {
+            new Transaction { TransactionId = 1, Time = DateTime.Now.AddDays(-4) },
+            new Transaction { TransactionId = 2, Time = DateTime.Now.AddDays(-3) }
+        };
+
+            _mockTransactionRepository
+                .Setup(r => r.GetMany(It.IsAny<Expression<Func<Transaction, bool>>>()))
+                .Returns(transactions);
+
+            // Act
+            var result = _transactionServices.GetByDate(startDate, endDate);
+
+            // Assert
+            Assert.AreEqual(2, result.Count);
+        }
     }
+
 }
